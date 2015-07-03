@@ -1,5 +1,5 @@
 const int sensorPin = A0;
-const float tresholdFactor = .925;
+const float tresholdFactor = .5;
 const long transactionIntervalTime = 10000; // 10 seconds
 const int LEDPin = 9;
 
@@ -19,7 +19,7 @@ void loop() {
   
   sensorValue = analogRead(sensorPin);
   long currentMillis = millis();
-  
+  Serial.println(sensorValue);
   if(currentMillis < 5000) { // calibration
     if(sensorValue > sensorMaxValue) {
       sensorMaxValue = sensorValue;
