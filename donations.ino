@@ -3,16 +3,17 @@ const float tresholdFactor = .90;
 const long calibrationIntervalTime = 2000; // 2 seconds
 const long transactionIntervalTime = 6000; // 6 seconds
 const long confirmationIntervalTime = 1000; // 2 seconds
+const long pauseIntervalTime = 10000; // 10 seconds
 
 const int LEDPin1 = 9;
 const int LEDPin2 = 10;
 const int LEDPin3 = 11;
 
-const int LEDPinBtn1 = 2;
-const int LEDPinBtn2 = 3;
-const int LEDPinBtn3 = 4;
+const int LEDPinBtn1 = 3;
+const int LEDPinBtn2 = 5;
+const int LEDPinBtn3 = 6;
 
-const int BTNPin1 = 5;
+const int BTNPin1 = 4;
 const int BTNPin2 = 7;
 const int BTNPin3 = 8;
 
@@ -22,6 +23,8 @@ long lastReading = 0;
 int selectedAmount = 0;
 boolean signalSentToProcessing = false;
 boolean isCardRemoved = true;
+
+int periode = 2000;
 
 
 void setup() {
@@ -41,6 +44,27 @@ void setup() {
 
 void loop() {
   
+    // Amount Selection Block:
+  if (digitalRead(BTNPin1) == LOW) {     
+    // turn LED off:    
+    digitalWrite(LEDPinBtn1, HIGH);
+    digitalWrite(LEDPinBtn2, LOW);
+    digitalWrite(LEDPinBtn3, LOW);
+    selectedAmount = 1;
+  } else if (digitalRead(BTNPin2) == LOW) {
+    // turn LED on:
+    digitalWrite(LEDPinBtn1, LOW);
+    digitalWrite(LEDPinBtn2, HIGH);
+    digitalWrite(LEDPinBtn3, LOW);
+    selectedAmount = 2; 
+  } else if (digitalRead(BTNPin3) == LOW) {
+    // turn LED on:
+    digitalWrite(LEDPinBtn1, LOW);
+    digitalWrite(LEDPinBtn2, LOW);
+    digitalWrite(LEDPinBtn3, HIGH);
+    selectedAmount = 3; 
+  }
+  
   sensorValue = analogRead(sensorPin);
   long currentMillis = millis();
 //Serial.println(sensorValue);
@@ -58,12 +82,23 @@ void loop() {
       analogWrite(LEDPin3,0);
     }
  
-  } else if (isCardRemoved
+  } else if (selectedAmount == 0) {
+     long time = millis();
+     int value = 128+127*cos(2*PI/periode*time);
+      // sets the value (range from 0 to 255):
+      analogWrite(LEDPinBtn1, value);
+      analogWrite(LEDPinBtn2, value);  
+      analogWrite(LEDPinBtn3, value);   
+      // wait for 30 milliseconds to see the dimming effect    
+
+    
+  } else if (isCardRemoved // first loop when card is put on the sensor
        && sensorValue <= sensorMaxValue*tresholdFactor
        && (lastReading == 0 || lastReading + transactionIntervalTime + confirmationIntervalTime < currentMillis)) {
     
-    isCardRemoved = false;
-    lastReading = currentMillis;
+      isCardRemoved = false;
+      lastReading = currentMillis;
+
 
   } else if (!isCardRemoved
       && lastReading != 0
@@ -111,11 +146,27 @@ void loop() {
         analogWrite(LEDPin2,0);
         analogWrite(LEDPin3,0);
       }
-
-  } else {
+        
+  } else if (!isCardRemoved
+      && lastReading != 0
+      && lastReading + transactionIntervalTime + confirmationIntervalTime + pauseIntervalTime >= currentMillis) {
       analogWrite(LEDPin1,0);
       analogWrite(LEDPin2,0);
       analogWrite(LEDPin3,0);
+        
+  } else if (!isCardRemoved // now we can reset the system for the next donation - we waited pauseIntervalTime seconds after previous donation, enough time to watch the video
+      && lastReading != 0
+      && lastReading + transactionIntervalTime + confirmationIntervalTime + pauseIntervalTime < currentMillis) {
+      
+      selectedAmount = 0;
+        
+  } else {
+      long time = millis();
+      int value = 128+127*cos(2*PI/periode*time);
+      // sets the value (range from 0 to 255):
+      analogWrite(LEDPin1, value);
+      analogWrite(LEDPin2, value);  
+      analogWrite(LEDPin3, value);  
       signalSentToProcessing = false;
       if(sensorValue > sensorMaxValue*tresholdFactor) {
         isCardRemoved = true;
@@ -123,25 +174,6 @@ void loop() {
   }
 
 
-  // Amount Selection Block:
-  if (digitalRead(BTNPin1) == LOW) {     
-    // turn LED off:    
-    digitalWrite(LEDPinBtn1, HIGH);
-    digitalWrite(LEDPinBtn2, LOW);
-    digitalWrite(LEDPinBtn3, LOW);
-    selectedAmount = 1;
-  } else if (digitalRead(BTNPin2) == LOW) {
-    // turn LED on:
-    digitalWrite(LEDPinBtn1, LOW);
-    digitalWrite(LEDPinBtn2, HIGH);
-    digitalWrite(LEDPinBtn3, LOW);
-    selectedAmount = 2; 
-  } else if (digitalRead(BTNPin3) == LOW) {
-    // turn LED on:
-    digitalWrite(LEDPinBtn1, LOW);
-    digitalWrite(LEDPinBtn2, LOW);
-    digitalWrite(LEDPinBtn3, HIGH);
-    selectedAmount = 3; 
-  }
+
 
 }
