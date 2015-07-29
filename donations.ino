@@ -67,7 +67,7 @@ void loop() {
   
   sensorValue = analogRead(sensorPin);
   long currentMillis = millis();
-//Serial.println(sensorValue);
+
   if(currentMillis < calibrationIntervalTime) { // calibration
     if(sensorValue > sensorMaxValue) {
       sensorMaxValue = sensorValue;
@@ -159,6 +159,8 @@ void loop() {
       && lastReading + transactionIntervalTime + confirmationIntervalTime + pauseIntervalTime < currentMillis) {
       
       selectedAmount = 0;
+      isCardRemoved = true;
+      Serial.println("reset");
         
   } else {
       long time = millis();
